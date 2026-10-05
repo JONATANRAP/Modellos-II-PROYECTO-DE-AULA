@@ -1,0 +1,305 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{url}
+\usepackage[spanish,english]{babel}
+
+\begin{document}
+
+\title{Sistema predictivo de recomendación de cultivos para la optimización agrícola}
+
+\author{
+\IEEEauthorblockN{1\textsuperscript{st} Jonatan Romero}
+\IEEEauthorblockA{
+\textit{Ingeniería de Sistemas} \\
+\textit{Universidad de Antioquia}\\
+\textit{Medellín, Antioquia}\\
+\textit{jonatan.romeroa@udea.edu.co}
+}
+\and
+\IEEEauthorblockN{2\textsuperscript{nd} Sebastian Berrio}
+\IEEEauthorblockA{
+\textit{Ingeniería de Sistemas} \\
+\textit{Universidad de Antioquia}\\
+\textit{Medellín, Antioquia}\\
+\textit{sebastian.berriom@udea.edu.co}
+}
+\and
+\IEEEauthorblockN{3\textsuperscript{rd} Cristian Diez}
+\IEEEauthorblockA{
+\textit{Ingeniería de Sistemas} \\
+\textit{Universidad de Antioquia}\\
+\textit{Medellín, Antioquia}\\
+\textit{cristian.diez@udea.edu.co}
+}
+}
+
+\maketitle
+
+\selectlanguage{spanish}
+
+% =====================================================================
+\begin{abstract}
+La selección del cultivo adecuado para un terreno depende de la interacción entre las propiedades fisicoquímicas del suelo y las condiciones climáticas de la zona. Cuando esta decisión se basa únicamente en la experiencia o en criterios generales, puede conducir a recomendaciones imprecisas, pérdida de recursos y bajo rendimiento. Este trabajo propone un sistema predictivo basado en aprendizaje automático que recomienda el cultivo más apto a partir de siete variables: nitrógeno, fósforo, potasio, temperatura, humedad relativa, pH y precipitación. Se emplea un conjunto de datos público de 2200 registros distribuidos de forma balanceada en 22 cultivos, sin valores faltantes ni registros duplicados. El problema se formula como una tarea de clasificación multiclase supervisada. El análisis exploratorio indica que el potasio, la humedad y el fósforo son las variables con mayor capacidad de separación entre clases, y que existe una correlación fuerte entre fósforo y potasio ($r=0.74$), lo que sugiere redundancia en el espacio de características. Se compararán clasificadores de distintas familias (regresión logística, $k$ vecinos más cercanos, Random Forest, redes neuronales artificiales y máquinas de soporte vectorial) mediante validación cruzada estratificada, con la exactitud y el F1 macro como métricas principales. Adicionalmente, se estudiará el efecto de la selección de características y de la reducción de dimensionalidad mediante PCA y UMAP sobre el desempeño predictivo.
+\end{abstract}
+
+\renewcommand{\IEEEkeywordsname}{Palabras clave}
+\begin{IEEEkeywords}
+aprendizaje automático, recomendación de cultivos, clasificación multiclase, agricultura de precisión, reducción de dimensionalidad, PCA, UMAP.
+\end{IEEEkeywords}
+
+\selectlanguage{english}
+\begin{abstract}
+Selecting the appropriate crop for a plot of land depends on the interaction between the physicochemical properties of the soil and the climatic conditions of the area. When this decision relies solely on experience or general criteria, it can lead to inaccurate recommendations, wasted resources, and low yields. This work proposes a machine learning-based predictive system that recommends the most suitable crop from seven variables: nitrogen, phosphorus, potassium, temperature, relative humidity, pH, and rainfall. A public dataset of 2200 records, evenly distributed across 22 crops and free of missing values and duplicates, is used. The problem is formulated as a supervised multiclass classification task. Exploratory analysis indicates that potassium, humidity, and phosphorus have the greatest class-separation capacity, and that phosphorus and potassium are strongly correlated ($r=0.74$), suggesting redundancy in the feature space. Classifiers from different families (logistic regression, $k$-nearest neighbors, Random Forest, artificial neural networks, and support vector machines) will be compared using stratified cross-validation, with accuracy and macro F1 as the main metrics. In addition, the effect of feature selection and dimensionality reduction through PCA and UMAP on predictive performance will be studied.
+\end{abstract}
+
+\renewcommand{\IEEEkeywordsname}{Index Terms}
+\begin{IEEEkeywords}
+machine learning, crop recommendation, multiclass classification, precision agriculture, dimensionality reduction, PCA, UMAP.
+\end{IEEEkeywords}
+
+\selectlanguage{spanish}
+
+% =====================================================================
+\section{Introducción}
+
+La agricultura es una de las principales fuentes de alimento, empleo e ingresos en los países en desarrollo. Sin embargo, el rendimiento de un cultivo está condicionado por factores que varían entre regiones e incluso entre lotes de una misma finca: la disponibilidad de macronutrientes del suelo (nitrógeno, fósforo y potasio, conocidos como NPK), su nivel de acidez (pH) y las condiciones meteorológicas (temperatura, humedad y precipitación). Elegir un cultivo poco adecuado para estas condiciones genera sobrecostos en fertilización y riego, reduce la productividad y, a largo plazo, contribuye a la degradación del suelo \cite{thilakarathne2022}.
+
+Las técnicas de aprendizaje automático (ML, por sus siglas en inglés) permiten aprender, a partir de ejemplos etiquetados, las relaciones entre estas variables y el cultivo más apropiado, sin necesidad de definir reglas de forma explícita \cite{bishop2006}. Los trabajos que han abordado este problema reportan exactitudes superiores al 97\,\% \cite{thilakarathne2022,prity2024,alam2025}; no obstante, la mayoría evalúa los modelos con una única partición de entrenamiento y prueba, y no analiza si todas las variables son necesarias para obtener ese desempeño.
+
+En este contexto, el presente proyecto tiene como objetivo construir un sistema que reciba las siete variables de un terreno y devuelva el cultivo recomendado. Para ello, se compararán clasificadores de distintas familias bajo una metodología experimental común y se analizará en qué medida es posible reducir el número de variables, mediante selección de características y técnicas de reducción de dimensionalidad, sin afectar significativamente el desempeño. Este primer informe presenta la descripción del problema, el análisis exploratorio de los datos, el paradigma de aprendizaje adoptado y la revisión del estado del arte.
+
+% =====================================================================
+\section{Descripción del problema}
+
+\subsection{Contexto y justificación}
+
+Tradicionalmente, la elección del cultivo se apoya en la experiencia del agricultor o en recomendaciones generales por región. Este enfoque resulta insuficiente porque la relación entre las condiciones del terreno y la idoneidad de cada cultivo es multivariable y no lineal: un mismo nivel de precipitación puede ser favorable para un cultivo y desfavorable para otro, según los nutrientes disponibles y la temperatura. Evaluar simultáneamente siete variables frente a 22 alternativas de cultivo supera lo que puede resolverse con reglas simples o con el análisis aislado de cada variable.
+
+Una solución basada en ML aborda esta limitación de tres maneras. Primero, aprende directamente de los datos las fronteras de decisión que separan las condiciones asociadas a cada cultivo. Segundo, ofrece recomendaciones objetivas y reproducibles, que no dependen del criterio individual de quien las emite. Tercero, una vez entrenado, el modelo puede integrarse en aplicaciones web o móviles alimentadas por análisis de suelo o sensores IoT, y entregar recomendaciones inmediatas y de bajo costo. Por estas razones, los sistemas de recomendación de cultivos se consideran un componente central de la agricultura de precisión \cite{thilakarathne2022,shastri2025}.
+
+\subsection{Composición de la base de datos}
+
+Se utiliza el conjunto de datos de acceso abierto \emph{Crop Recommendation}, disponible en la plataforma Kaggle \cite{kumar_dataset}. Fue construido a partir de registros de precipitación, clima y fertilizantes de la India, y es el mismo empleado por varios de los trabajos revisados en la Sección~\ref{sec:sota}, lo que facilita la comparación de resultados. La Tabla~\ref{tab:resumen} resume sus características generales.
+
+\begin{table}[htbp]
+\caption{Resumen del conjunto de datos}
+\label{tab:resumen}
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Característica} & \textbf{Valor} \\
+\midrule
+Número de muestras & 2200 \\
+Variables de entrada & 7 (numéricas) \\
+Variable objetivo & Cultivo (categórica) \\
+Número de clases & 22 \\
+Muestras por clase & 100 (4.55\,\%) \\
+Razón de desbalance (IR) & 1.00 (balanceado) \\
+Valores faltantes & 0 (0\,\%) \\
+Registros duplicados & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Las 22 clases corresponden a los siguientes cultivos: arroz, maíz, garbanzo, frijol rojo, guandul, frijol polilla, frijol mungo, frijol negro, lenteja, granada, banano, mango, uva, sandía, melón, manzana, naranja, papaya, coco, algodón, yute y café. La Tabla~\ref{tab:variables} describe el significado de cada variable predictora, su tipo y sus estadísticos descriptivos. La última columna presenta el estadístico $F$ de un análisis de varianza (ANOVA) de una vía entre cada variable y el cultivo, utilizado como indicador preliminar de su capacidad discriminante: un valor mayor indica que la variable separa mejor las clases.
+
+\begin{table*}[htbp]
+\caption{Descripción, tipo y estadísticos de las variables predictoras}
+\label{tab:variables}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lllrrrrr}
+\toprule
+\textbf{Variable} & \textbf{Descripción (unidad)} & \textbf{Tipo} & \textbf{Media} & \textbf{Desv. est.} & \textbf{Mín.} & \textbf{Máx.} & \textbf{$F$ (ANOVA)} \\
+\midrule
+N & Nitrógeno en el suelo & Entero & 50.55 & 36.92 & 0 & 140 & 897.6 \\
+P & Fósforo en el suelo & Entero & 53.36 & 32.99 & 5 & 145 & 1\,885.7 \\
+K & Potasio en el suelo & Entero & 48.15 & 50.65 & 5 & 205 & 27\,238.4 \\
+temperature & Temperatura ambiente (°C) & Real & 25.62 & 5.06 & 8.83 & 43.68 & 102.2 \\
+humidity & Humedad relativa (\%) & Real & 71.48 & 22.26 & 14.26 & 99.98 & 3\,103.7 \\
+ph & Acidez o alcalinidad del suelo & Real & 6.47 & 0.77 & 3.50 & 9.94 & 60.3 \\
+rainfall & Precipitación (mm) & Real & 103.46 & 54.96 & 20.21 & 298.56 & 605.5 \\
+\midrule
+label & Cultivo recomendado & Categórica & \multicolumn{5}{c}{22 clases, 100 muestras por clase} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Del análisis exploratorio se destacan cuatro hallazgos:
+
+\begin{itemize}
+    \item \textbf{Escalas heterogéneas.} Los rangos de las variables difieren hasta en dos órdenes de magnitud (pH entre 3.5 y 9.9 frente a precipitaciones de casi 300\,mm), lo que hace necesario estandarizarlas para los algoritmos sensibles a la escala.
+    \item \textbf{Distribuciones no normales.} K presenta una asimetría positiva marcada (2.38) y una distribución bimodal, mientras que la humedad muestra asimetría negativa ($-1.09$), con concentración en valores altos.
+    \item \textbf{Valores atípicos informativos.} Con el criterio del rango intercuartílico ($1.5\times\mathrm{IQR}$) se detectaron valores atípicos en K (200 muestras), P (138), precipitación (100), temperatura (86), pH (57) y humedad (30). Al analizarlos por clase se verificó que no son errores de medición: por ejemplo, los 200 valores atípicos de K corresponden exactamente a las muestras de manzana y uva, cultivos que requieren niveles de potasio cercanos a 200. Por lo tanto, se conservan, ya que aportan información discriminante.
+    \item \textbf{Relevancia y redundancia.} K, la humedad y P son las variables con mayor capacidad discriminante, mientras que la temperatura y el pH presentan rangos muy solapados entre cultivos (Tabla~\ref{tab:variables}). La mayoría de las variables tienen correlaciones de Pearson débiles entre sí ($|r|<0.25$), con la excepción de P y K, que están fuertemente correlacionadas ($r=0.74$). Esta redundancia motiva el estudio de la selección de características y de la reducción de dimensionalidad.
+\end{itemize}
+
+\textbf{Imputación y codificación.} Dado que no existen valores faltantes ni registros duplicados, no fue necesario aplicar estrategias de imputación ni de depuración. La Tabla~\ref{tab:codificacion} resume la codificación definida para cada tipo de variable. Los parámetros de estandarización se estimarán exclusivamente con los datos de entrenamiento de cada partición y luego se aplicarán a los datos de validación y prueba, con el fin de evitar la fuga de información.
+
+\begin{table}[htbp]
+\caption{Codificación de las variables}
+\label{tab:codificacion}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{1.7cm}>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{3.5cm}}
+\toprule
+\textbf{Variables} & \textbf{Codificación} & \textbf{Justificación} \\
+\midrule
+N, P, K, temperature, humidity, ph, rainfall & Estandarización: $z=\frac{x-\mu}{\sigma}$ & Ya son numéricas; se estandarizan por sus escalas heterogéneas. Necesaria para regresión logística, KNN, SVM, redes neuronales, PCA y UMAP; no se requiere en Random Forest. \\
+\midrule
+label & Etiquetas enteras (0 a 21) & Formato numérico requerido por los clasificadores. \\
+\midrule
+label (red neuronal) & \emph{One-hot} (22 componentes) & Compatible con la salida \emph{softmax} y la pérdida de entropía cruzada. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Paradigma de aprendizaje}
+
+El problema se aborda bajo el paradigma de \textbf{aprendizaje supervisado}, ya que cada muestra cuenta con una etiqueta conocida que indica el cultivo asociado a sus condiciones. Específicamente, corresponde a una tarea de \textbf{clasificación multiclase}, porque la variable objetivo es categórica y toma uno de 22 valores mutuamente excluyentes \cite{bishop2006,hastie2009}. Formalmente, dado el conjunto de entrenamiento
+\begin{equation}
+\mathcal{D}=\{(\mathbf{x}_i,y_i)\}_{i=1}^{n},\quad \mathbf{x}_i\in\mathbb{R}^{7},\; y_i\in\{0,\dots,21\},
+\end{equation}
+donde $\mathbf{x}_i$ contiene las siete variables de la muestra $i$ y $y_i$ su cultivo, el objetivo es encontrar una función $f:\mathbb{R}^{7}\rightarrow\{0,\dots,21\}$ que prediga correctamente el cultivo de nuevas observaciones.
+
+Este paradigma resulta apropiado por tres razones: las etiquetas están disponibles para todas las muestras; la salida es discreta, por lo que la regresión no aplica; y permite medir directamente la capacidad de generalización de los modelos sobre datos no vistos. El aprendizaje no supervisado se utilizará únicamente como herramienta auxiliar, mediante PCA \cite{hastie2009} y UMAP \cite{mcinnes2018}, para transformar el espacio de características antes de la clasificación.
+
+La Tabla~\ref{tab:diseno} resume la configuración experimental propuesta. Al tratarse de un conjunto perfectamente balanceado, la exactitud es una métrica representativa; aun así, se complementará con métricas promediadas por clase y con la matriz de confusión, que permite identificar qué cultivos se confunden entre sí.
+
+\begin{table}[htbp]
+\caption{Configuración experimental propuesta}
+\label{tab:diseno}
+\centering
+\footnotesize
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.1cm}>{\raggedright\arraybackslash}p{5.3cm}}
+\toprule
+\textbf{Elemento} & \textbf{Definición} \\
+\midrule
+Paradigma & Aprendizaje supervisado, clasificación multiclase (22 clases) \\
+Modelos & Regresión logística (paramétrico), KNN (no paramétrico), Random Forest (ensamble), red neuronal artificial y SVM \\
+Partición & 80\,\% entrenamiento (1760) y 20\,\% prueba (440), estratificada, semilla fija \\
+Validación & Validación cruzada estratificada de 5 particiones sobre el entrenamiento, con ajuste de hiperparámetros por búsqueda en malla \\
+Métricas & Exactitud, precisión, sensibilidad y F1 macro; matriz de confusión \\
+Reducción de dimensión & Variables originales, selección de características, PCA y UMAP \\
+Herramienta & Python con scikit-learn \cite{pedregosa2011} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =====================================================================
+\section{Estado del arte}
+\label{sec:sota}
+
+La recomendación de cultivos mediante ML ha sido abordada en la literatura reciente con diferentes algoritmos de clasificación, a partir de las características fisicoquímicas del suelo y las condiciones climáticas. Los trabajos revisados se publicaron en revistas indexadas y formulan el problema como una \emph{clasificación multiclase supervisada}. La Tabla~\ref{tab:sota} resume sus técnicas, metodología de validación, métricas y resultados.
+
+\begin{table*}[htbp]
+\caption{Resumen de trabajos relacionados}
+\label{tab:sota}
+\centering
+\footnotesize
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}p{4.1cm}>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{3.3cm}}
+\toprule
+\textbf{Trabajo} & \textbf{Técnicas} & \textbf{Validación} & \textbf{Métricas} & \textbf{Mejor resultado} \\
+\midrule
+Thilakarathne \emph{et al.} (2022) \cite{thilakarathne2022} & KNN, árbol de decisión, Random Forest, XGBoost, SVM & Partición 70/30 y validación cruzada de 10 particiones & Exactitud, precisión, sensibilidad, F1 & Random Forest: 97.18\,\% de exactitud y 97.40\,\% en validación cruzada \\
+\midrule
+Dey \emph{et al.} (2024) \cite{dey2024} & SVM, XGBoost, Random Forest, KNN, árbol de decisión & Partición entrenamiento/prueba & Exactitud, precisión, sensibilidad, F1 & XGBoost: 99.09\,\% (agrícolas), 99.30\,\% (hortícolas) y 98.51\,\% (combinados) \\
+\midrule
+Prity \emph{et al.} (2024) \cite{prity2024} & Regresión logística, SVM, KNN, árbol de decisión, Random Forest, Bagging, AdaBoost, Gradient Boosting, Extra Trees & Partición 80/20 & Exactitud, precisión, sensibilidad, F1, matriz de confusión, curva ROC & Random Forest: 99.31\,\% de exactitud \\
+\midrule
+Alam \emph{et al.} (2025) \cite{alam2025} & Ensamble por votación suave (regresión logística, Random Forest, Naïve Bayes, árbol, KNN, XGBoost) & Partición 80/20; robustez con particiones 90/10, 70/30, 60/40 y 50/50 & Exactitud, precisión, sensibilidad, F1, entropía predictiva & Ensamble: 99.54\,\% de exactitud y F1 de 99.54\,\% \\
+\midrule
+Shastri \emph{et al.} (2025) \cite{shastri2025} & Diez modelos, entre ellos KNN, Random Forest, SVM, regresión logística, red neuronal y Gradient Boosting; explicabilidad con LIME & Partición 75/25 (1650/550) & Exactitud, precisión, sensibilidad, F1, matriz de confusión, AUC-ROC & Gradient Boosting: 99.27\,\% de exactitud y F1 de 99.32\,\% \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Thilakarathne \emph{et al.} \cite{thilakarathne2022} compararon cinco clasificadores sobre el conjunto de 2200 registros y desplegaron el mejor de ellos, Random Forest, en una plataforma de recomendación en la nube; es el único trabajo revisado que reporta validación cruzada. Dey \emph{et al.} \cite{dey2024} extendieron el problema a cultivos agrícolas y hortícolas de la India con las mismas variables (NPK, pH, temperatura, humedad y precipitación), y obtuvieron los mejores resultados con XGBoost. Prity \emph{et al.} \cite{prity2024} evaluaron nueve algoritmos, varios de ellos ensambles, y alcanzaron el mayor desempeño con Random Forest. Alam \emph{et al.} \cite{alam2025} propusieron un ensamble por votación suave de seis modelos que, además de predecir el cultivo, estima la confianza de cada recomendación. Finalmente, Shastri \emph{et al.} \cite{shastri2025} compararon diez modelos, incluidas una red neuronal (cercana al 98\,\% de exactitud) y la regresión logística (cercana al 96\,\%), e interpretaron las predicciones mediante LIME.
+
+\textbf{Entropía predictiva.} Alam \emph{et al.} \cite{alam2025} cuantifican la incertidumbre de cada predicción con la entropía de Shannon de las probabilidades estimadas para las $C$ clases:
+\begin{equation}
+H(\mathbf{x})=-\sum_{c=1}^{C} p_c(\mathbf{x})\log p_c(\mathbf{x}),
+\end{equation}
+donde $p_c(\mathbf{x})$ es la probabilidad que el modelo asigna a la clase $c$. Si toda la probabilidad se concentra en una clase, $H=0$ (máxima confianza); si se reparte de forma uniforme, $H=\log C$ (máxima incertidumbre). Los autores interpretan la confianza como alta para $H<1.0$, moderada para $1.0\le H\le1.5$ y baja para $H>1.5$.
+
+En conjunto, los trabajos coinciden en que los modelos basados en árboles y los ensambles superan el 97\,\% de exactitud, lo que es coherente con la alta separabilidad entre cultivos observada en el análisis exploratorio. Sin embargo, la mayoría utiliza una única partición de datos, lo que dificulta comparar los resultados con rigor, y ninguno evalúa el efecto de reducir el número de variables. El presente proyecto aborda estas limitaciones mediante una comparación homogénea con validación cruzada estratificada y el análisis explícito de la selección de características y de la reducción de dimensionalidad con PCA y UMAP.
+
+% =====================================================================
+\begin{thebibliography}{00}
+
+\bibitem{thilakarathne2022}
+N. N. Thilakarathne, M. S. A. Bakar, P. E. Abas, and H. Yassin,
+``A cloud enabled crop recommendation platform for machine learning-driven precision farming,''
+\textit{Sensors}, vol. 22, no. 16, p. 6299, 2022,
+doi: 10.3390/s22166299.
+
+\bibitem{dey2024}
+B. Dey, M. Ferdous, and R. Ahmed,
+``Machine learning based recommendation of agricultural and horticultural crop farming in India under the regime of NPK, soil pH and three climatic variables,''
+\textit{Heliyon}, vol. 10, no. 3, e25112, 2024,
+doi: 10.1016/j.heliyon.2024.e25112.
+
+\bibitem{prity2024}
+F. S. Prity, M. M. Hasan, S. H. Saif, M. M. Hossain, S. H. Bhuiyan, M. A. Islam, and M. T. H. Lavlu,
+``Enhancing agricultural productivity: A machine learning approach to crop recommendations,''
+\textit{Human-Centric Intelligent Systems}, vol. 4, pp. 497--510, 2024,
+doi: 10.1007/s44230-024-00081-3.
+
+\bibitem{alam2025}
+M. S. B. Alam, V. Esichaikul, A. Lameesa, S. F. Ahmed, and A. H. Gandomi,
+``An approach for crop recommendation with uncertainty quantification based on machine learning for sustainable agricultural decision-making,''
+\textit{Results in Engineering}, vol. 26, p. 105505, 2025,
+doi: 10.1016/j.rineng.2025.105505.
+
+\bibitem{shastri2025}
+S. Shastri, S. Kumar, V. Mansotra, and R. Salgotra,
+``Advancing crop recommendation system with supervised machine learning and explainable artificial intelligence,''
+\textit{Scientific Reports}, vol. 15, p. 25498, 2025,
+doi: 10.1038/s41598-025-07003-8.
+
+\bibitem{bishop2006}
+C. M. Bishop,
+\textit{Pattern Recognition and Machine Learning}.
+New York, NY, USA: Springer, 2006.
+
+\bibitem{hastie2009}
+T. Hastie, R. Tibshirani, and J. Friedman,
+\textit{The Elements of Statistical Learning}, 2nd ed.
+New York, NY, USA: Springer, 2009.
+
+\bibitem{pedregosa2011}
+F. Pedregosa \textit{et al.},
+``Scikit-learn: Machine learning in Python,''
+\textit{Journal of Machine Learning Research},
+vol. 12, pp. 2825--2830, 2011.
+
+\bibitem{mcinnes2018}
+L. McInnes, J. Healy, and J. Melville,
+``UMAP: Uniform manifold approximation and projection for dimension reduction,''
+arXiv:1802.03426, 2018.
+
+\bibitem{kumar_dataset}
+``Crop recommendation,'' Kaggle. [En línea]. Disponible en: \url{https://www.kaggle.com/datasets/aksahaha/crop-recommendation}
+
+\end{thebibliography}
+
+% =====================================================================
+\appendices
+\section{Repositorio del proyecto}
+
+El código fuente, los cuadernos de análisis exploratorio y los experimentos del proyecto se encuentran disponibles en el siguiente repositorio:
+\begin{center}
+\url{https://github.com/JONATANRAP/Modellos-II-PROYECTO-DE-AULA}
+\end{center}
+
+\end{document}

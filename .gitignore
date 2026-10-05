@@ -1,0 +1,21 @@
+# Entornos virtuales
+venv/
+env/
+.env
+
+# Archivos temporales de Python y Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Temporales de compilación LaTeX
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk
