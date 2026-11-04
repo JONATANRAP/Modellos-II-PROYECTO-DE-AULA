@@ -21,7 +21,7 @@ El proyecto aborda la recomendación de cultivos formulada como una tarea de cla
 
 ## ⚙️ Requisitos e Instalación
 
-El código fue desarrollado en **Python 3.10+**. Para instalar las dependencias necesarias:
+El código fue desarrollado en **Python 3.10+**. Para instalar las dependencias necesarias: 
 
 ```bash
 git clone https://github.com/crd10lop/ml-crop-recommendation.git
