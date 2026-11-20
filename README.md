@@ -123,23 +123,6 @@ Los cuadernos están diseñados para ejecutarse desde la raíz del proyecto o de
 - **PCA y UMAP:** no mejoran el desempeño. PCA conserva el de SVM (98.07 %) pero degrada el de Random Forest (94.32 %); UMAP es útil para visualización (≈ 94 %).
 - **Prueba:** el modelo final obtiene 98.86 % en prueba, coherente con la estimación de validación.
 
---- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Base: Perceptrón Multicapa (MLP)** | **Original (7 vars)** | **`hidden_layer_sizes=(32,)`, `alpha=0.01`** | **0.9932** | **0.0068** | **0.9937** | **0.9932** | **0.9932** |
-| Base: SVM (RBF) | Original (7 vars) | `C=1`, `gamma=1` | 0.9909 | 0.0091 | 0.9915 | 0.9909 | 0.9909 |
-| Base: Random Forest | Original (7 vars) | `n_estimators=19`, `max_depth=10`, `sqrt` | 0.9886 | 0.0114 | 0.9897 | 0.9886 | 0.9887 |
-| Base: Regresión Logística | Original (7 vars) | `C=100` | 0.9841 | 0.0159 | 0.9852 | 0.9841 | 0.9840 |
-| Base: K-Nearest Neighbors (KNN) | Original (7 vars) | `n_neighbors=4` | 0.9727 | 0.0273 | 0.9746 | 0.9727 | 0.9725 |
-| **PCA + Perceptrón Multicapa (MLP)** | **Reducida (6 comp.)** | **97.24% varianza explicada** | **0.9886** | **0.0114** | **0.9889** | **0.9886** | **0.9886** |
-| PCA + SVM (RBF) | Reducida (6 comp.) | 97.24% varianza explicada | 0.9841 | 0.0159 | 0.9847 | 0.9841 | 0.9840 |
-| UMAP + SVM (RBF) | Reducida (2 comp.) | Proyección no lineal 2D | 0.9614 | 0.0386 | 0.9660 | 0.9614 | 0.9611 |
-| UMAP + Perceptrón Multicapa (MLP) | Reducida (2 comp.) | Proyección no lineal 2D | 0.9318 | 0.0682 | 0.9406 | 0.9318 | 0.9294 |
-
-### Síntesis de Hallazgos
-
-- **Mejor modelo predictivo:** El Perceptrón Multicapa (MLP) sobre las 7 variables originales estandarizadas alcanzó el mayor rendimiento con **99.32% de exactitud** y **0.9932 de Macro F1** (solo 3 muestras mal clasificadas de 440), seguido de SVM RBF con **99.09% de exactitud**.
-- **Efecto de PCA:** Al eliminar la séptima dirección ortogonal asociada a la colinealidad entre fósforo y potasio, las primeras 6 componentes retienen el 97.24% de la varianza y el MLP mantiene un **98.86% de exactitud** (variación de apenas 0.46 puntos porcentuales).
-- **Efecto de UMAP:** La reducción no lineal a 2 dimensiones separa visualmente los 22 cultivos en el plano y conserva una exactitud del **96.14% en SVM RBF** y **93.18% en MLP**, resultando útil para visualización exploratoria, aunque con pérdida predictiva frente al espacio completo.
-
 ---
 
 ## 6. Informe Técnico y Autores
