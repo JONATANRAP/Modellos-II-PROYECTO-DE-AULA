@@ -11,6 +11,9 @@
 \usepackage{url}
 \usepackage[spanish,english]{babel}
 
+\graphicspath{{figuras/}}
+\addto\captionsspanish{\renewcommand{\tablename}{Tabla}}
+
 \begin{document}
 
 \title{Sistema predictivo de recomendación de cultivos para la optimización agrícola}
@@ -47,45 +50,39 @@
 
 % =====================================================================
 \begin{abstract}
-La selección del cultivo adecuado para un terreno depende de la interacción entre las propiedades fisicoquímicas del suelo y las condiciones climáticas de la zona. Cuando esta decisión se basa únicamente en la experiencia o en criterios generales, puede conducir a recomendaciones imprecisas, pérdida de recursos y bajo rendimiento. Este trabajo propone un sistema predictivo basado en aprendizaje automático que recomienda el cultivo más apto a partir de siete variables: nitrógeno, fósforo, potasio, temperatura, humedad relativa, pH y precipitación. Se emplea un conjunto de datos público de 2200 registros distribuidos de forma balanceada en 22 cultivos, sin valores faltantes ni registros duplicados. El problema se formula como una tarea de clasificación multiclase supervisada. El análisis exploratorio indica que el potasio, la humedad y el fósforo son las variables con mayor capacidad de separación entre clases, y que existe una correlación fuerte entre fósforo y potasio ($r=0.74$), lo que sugiere redundancia en el espacio de características. Se compararán clasificadores de distintas familias (regresión logística, $k$ vecinos más cercanos, Random Forest, redes neuronales artificiales y máquinas de soporte vectorial) mediante validación cruzada estratificada, con la exactitud y el F1 macro como métricas principales. Adicionalmente, se estudiará el efecto de la selección de características y de la reducción de dimensionalidad mediante PCA y UMAP sobre el desempeño predictivo.
+La selección del cultivo adecuado para un terreno depende de la interacción entre las propiedades fisicoquímicas del suelo y las condiciones climáticas de la zona. Este trabajo propone un sistema predictivo basado en aprendizaje automático que recomienda el cultivo más apto a partir de siete variables: nitrógeno, fósforo y potasio del suelo (kg/ha), temperatura (°C), humedad relativa (\%), pH y precipitación (mm). Se emplea un conjunto de datos público de 2200 registros distribuidos de forma balanceada en 22 cultivos. Se compararon cinco clasificadores (regresión logística, $k$ vecinos más cercanos, Random Forest, perceptrón multicapa y SVM con núcleo RBF). Los hiperparámetros se ajustaron mediante búsqueda en malla con validación cruzada estratificada y, con la mejor configuración de cada modelo, se repitió la partición en $K=5$ pliegues para estimar la exactitud de validación y su intervalo de confianza de Wilson al 95\,\%. La selección de modelos se basó exclusivamente en datos de validación, y el conjunto de prueba se reservó para una única evaluación final. Random Forest obtuvo la mayor exactitud de validación (99.49\,\%, IC [99.03\,\%, 99.73\,\%]), seguido de SVM RBF (98.64\,\%). El análisis individual de variables mostró que ninguna es suficiente por sí sola (máximo 37.9\,\% de exactitud con la precipitación), y la selección secuencial hacia adelante identificó un subconjunto de cinco variables estadísticamente equivalente al modelo completo. PCA y UMAP no mejoraron el desempeño. Evaluado una sola vez en prueba, el modelo final alcanzó 98.86\,\% de exactitud (IC [97.37\,\%, 99.51\,\%]).
 \end{abstract}
 
 \renewcommand{\IEEEkeywordsname}{Palabras clave}
 \begin{IEEEkeywords}
-aprendizaje automático, recomendación de cultivos, clasificación multiclase, agricultura de precisión, reducción de dimensionalidad, PCA, UMAP.
+aprendizaje automático, recomendación de cultivos, clasificación multiclase, agricultura de precisión, intervalo de Wilson, selección de características, PCA, UMAP.
 \end{IEEEkeywords}
 
 \selectlanguage{english}
 \begin{abstract}
-Selecting the appropriate crop for a plot of land depends on the interaction between the physicochemical properties of the soil and the climatic conditions of the area. When this decision relies solely on experience or general criteria, it can lead to inaccurate recommendations, wasted resources, and low yields. This work proposes a machine learning-based predictive system that recommends the most suitable crop from seven variables: nitrogen, phosphorus, potassium, temperature, relative humidity, pH, and rainfall. A public dataset of 2200 records, evenly distributed across 22 crops and free of missing values and duplicates, is used. The problem is formulated as a supervised multiclass classification task. Exploratory analysis indicates that potassium, humidity, and phosphorus have the greatest class-separation capacity, and that phosphorus and potassium are strongly correlated ($r=0.74$), suggesting redundancy in the feature space. Classifiers from different families (logistic regression, $k$-nearest neighbors, Random Forest, artificial neural networks, and support vector machines) will be compared using stratified cross-validation, with accuracy and macro F1 as the main metrics. In addition, the effect of feature selection and dimensionality reduction through PCA and UMAP on predictive performance will be studied.
+Selecting the appropriate crop for a plot of land depends on the interaction between the physicochemical properties of the soil and the climatic conditions of the area. This work proposes a machine learning-based predictive system that recommends the most suitable crop from seven variables: soil nitrogen, phosphorus, and potassium (kg/ha), temperature (°C), relative humidity (\%), pH, and rainfall (mm). A public dataset of 2200 records evenly distributed across 22 crops is used. Five classifiers were compared (logistic regression, $k$-nearest neighbors, Random Forest, multilayer perceptron, and RBF-kernel SVM). Hyperparameters were tuned by grid search with stratified cross-validation and, with the best configuration of each model, the partition was repeated in $K=5$ folds to estimate the validation accuracy and its 95\,\% Wilson confidence interval. Model selection relied exclusively on validation data, and the test set was held out for a single final evaluation. Random Forest achieved the highest validation accuracy (99.49\,\%, CI [99.03\,\%, 99.73\,\%]), followed by RBF SVM (98.64\,\%). Individual feature analysis showed that no variable is sufficient on its own (at most 37.9\,\% accuracy with rainfall), and sequential forward selection identified a five-variable subset statistically equivalent to the full model. PCA and UMAP did not improve performance. Evaluated once on the test set, the final model reached 98.86\,\% accuracy (CI [97.37\,\%, 99.51\,\%]).
 \end{abstract}
 
 \renewcommand{\IEEEkeywordsname}{Index Terms}
 \begin{IEEEkeywords}
-machine learning, crop recommendation, multiclass classification, precision agriculture, dimensionality reduction, PCA, UMAP.
+machine learning, crop recommendation, multiclass classification, precision agriculture, Wilson interval, feature selection, PCA, UMAP.
 \end{IEEEkeywords}
 
 \selectlanguage{spanish}
 
 % =====================================================================
-\section{Introducción}
+\section{Introducción y descripción del problema}
+\label{sec:intro}
 
 La agricultura es una de las principales fuentes de alimento, empleo e ingresos en los países en desarrollo. Sin embargo, el rendimiento de un cultivo está condicionado por factores que varían entre regiones e incluso entre lotes de una misma finca: la disponibilidad de macronutrientes del suelo (nitrógeno, fósforo y potasio, conocidos como NPK), su nivel de acidez (pH) y las condiciones meteorológicas (temperatura, humedad y precipitación). Elegir un cultivo poco adecuado para estas condiciones genera sobrecostos en fertilización y riego, reduce la productividad y, a largo plazo, contribuye a la degradación del suelo \cite{thilakarathne2022}.
 
-Las técnicas de aprendizaje automático (ML, por sus siglas en inglés) permiten aprender, a partir de ejemplos etiquetados, las relaciones entre estas variables y el cultivo más apropiado, sin necesidad de definir reglas de forma explícita \cite{bishop2006}. Los trabajos que han abordado este problema reportan exactitudes superiores al 97\,\% \cite{thilakarathne2022,prity2024,alam2025}; no obstante, la mayoría evalúa los modelos con una única partición de entrenamiento y prueba, y no analiza si todas las variables son necesarias para obtener ese desempeño.
-
-En este contexto, el presente proyecto tiene como objetivo construir un sistema que reciba las siete variables de un terreno y devuelva el cultivo recomendado. Para ello, se compararán clasificadores de distintas familias bajo una metodología experimental común y se analizará en qué medida es posible reducir el número de variables, mediante selección de características y técnicas de reducción de dimensionalidad, sin afectar significativamente el desempeño. Este primer informe presenta la descripción del problema, el análisis exploratorio de los datos, el paradigma de aprendizaje adoptado y la revisión del estado del arte.
-
-% =====================================================================
-\section{Descripción del problema}
-
-\subsection{Contexto y justificación}
-
 Tradicionalmente, la elección del cultivo se apoya en la experiencia del agricultor o en recomendaciones generales por región. Este enfoque resulta insuficiente porque la relación entre las condiciones del terreno y la idoneidad de cada cultivo es multivariable y no lineal: un mismo nivel de precipitación puede ser favorable para un cultivo y desfavorable para otro, según los nutrientes disponibles y la temperatura. Evaluar simultáneamente siete variables frente a 22 alternativas de cultivo supera lo que puede resolverse con reglas simples o con el análisis aislado de cada variable.
 
-Una solución basada en ML aborda esta limitación de tres maneras. Primero, aprende directamente de los datos las fronteras de decisión que separan las condiciones asociadas a cada cultivo. Segundo, ofrece recomendaciones objetivas y reproducibles, que no dependen del criterio individual de quien las emite. Tercero, una vez entrenado, el modelo puede integrarse en aplicaciones web o móviles alimentadas por análisis de suelo o sensores IoT, y entregar recomendaciones inmediatas y de bajo costo. Por estas razones, los sistemas de recomendación de cultivos se consideran un componente central de la agricultura de precisión \cite{thilakarathne2022,shastri2025}.
+Las técnicas de aprendizaje automático (ML, por sus siglas en inglés) permiten aprender, a partir de ejemplos etiquetados, las fronteras de decisión que separan las condiciones asociadas a cada cultivo, sin definir reglas de forma explícita \cite{bishop2006}. Además, ofrecen recomendaciones objetivas y reproducibles y, una vez entrenadas, pueden integrarse en aplicaciones alimentadas por análisis de suelo o sensores IoT; por ello, los sistemas de recomendación de cultivos se consideran un componente central de la agricultura de precisión \cite{thilakarathne2022,shastri2025}. Los trabajos que han abordado este problema reportan exactitudes superiores al 97\,\% \cite{thilakarathne2022,prity2024,alam2025}; no obstante, la mayoría evalúa los modelos con una única partición de entrenamiento y prueba, sin intervalos de confianza, y no analiza si todas las variables son necesarias.
 
-\subsection{Composición de la base de datos}
+El objetivo de este proyecto es construir un sistema que reciba las siete variables de un terreno y devuelva el cultivo recomendado. Para ello se comparan clasificadores de distintas familias bajo una metodología común, en la que la selección de modelos se realiza exclusivamente con datos de validación y se acompaña de intervalos de confianza de Wilson, y se analiza en qué medida es posible reducir el número de variables mediante selección de características y reducción de dimensionalidad sin afectar el desempeño.
+
+\subsection{Conjunto de datos}
 
 Se utiliza el conjunto de datos de acceso abierto \emph{Crop Recommendation}, disponible en la plataforma Kaggle \cite{kumar_dataset}. Fue construido a partir de registros de precipitación, clima y fertilizantes de la India, y es el mismo empleado por varios de los trabajos revisados en la Sección~\ref{sec:sota}, lo que facilita la comparación de resultados. La Tabla~\ref{tab:resumen} resume sus características generales.
 
@@ -109,41 +106,42 @@ Registros duplicados & 0 \\
 \end{tabular}
 \end{table}
 
-Las 22 clases corresponden a los siguientes cultivos: arroz, maíz, garbanzo, frijol rojo, guandul, frijol polilla, frijol mungo, frijol negro, lenteja, granada, banano, mango, uva, sandía, melón, manzana, naranja, papaya, coco, algodón, yute y café. La Tabla~\ref{tab:variables} describe el significado de cada variable predictora, su tipo y sus estadísticos descriptivos. La última columna presenta el estadístico $F$ de un análisis de varianza (ANOVA) de una vía entre cada variable y el cultivo, utilizado como indicador preliminar de su capacidad discriminante: un valor mayor indica que la variable separa mejor las clases.
+Las 22 clases corresponden a los siguientes cultivos: arroz, maíz, garbanzo, frijol rojo, guandul, frijol polilla, frijol mungo, frijol negro, lenteja, granada, banano, mango, uva, sandía, melón, manzana, naranja, papaya, coco, algodón, yute y café. La Tabla~\ref{tab:variables} describe cada variable predictora, su unidad de medida, su tipo y sus estadísticos descriptivos. La última columna presenta el estadístico $F$ de un análisis de varianza (ANOVA) de una vía entre cada variable y el cultivo, utilizado como indicador preliminar de su capacidad discriminante univariada.
 
 \begin{table*}[htbp]
-\caption{Descripción, tipo y estadísticos de las variables predictoras}
+\caption{Descripción, unidades de medida y estadísticos de las variables predictoras}
 \label{tab:variables}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{lllrrrrr}
+\begin{tabular}{lllcrrrrr}
 \toprule
-\textbf{Variable} & \textbf{Descripción (unidad)} & \textbf{Tipo} & \textbf{Media} & \textbf{Desv. est.} & \textbf{Mín.} & \textbf{Máx.} & \textbf{$F$ (ANOVA)} \\
+\textbf{Variable} & \textbf{Descripción} & \textbf{Unidad} & \textbf{Tipo} & \textbf{Media} & \textbf{Desv. est.} & \textbf{Mín.} & \textbf{Máx.} & \textbf{$F$ (ANOVA)} \\
 \midrule
-N & Nitrógeno en el suelo & Entero & 50.55 & 36.92 & 0 & 140 & 897.6 \\
-P & Fósforo en el suelo & Entero & 53.36 & 32.99 & 5 & 145 & 1\,885.7 \\
-K & Potasio en el suelo & Entero & 48.15 & 50.65 & 5 & 205 & 27\,238.4 \\
-temperature & Temperatura ambiente (°C) & Real & 25.62 & 5.06 & 8.83 & 43.68 & 102.2 \\
-humidity & Humedad relativa (\%) & Real & 71.48 & 22.26 & 14.26 & 99.98 & 3\,103.7 \\
-ph & Acidez o alcalinidad del suelo & Real & 6.47 & 0.77 & 3.50 & 9.94 & 60.3 \\
-rainfall & Precipitación (mm) & Real & 103.46 & 54.96 & 20.21 & 298.56 & 605.5 \\
+N & Nitrógeno disponible en el suelo & kg/ha$^{\ast}$ & Entero & 50.55 & 36.92 & 0 & 140 & 897.6 \\
+P & Fósforo disponible en el suelo & kg/ha$^{\ast}$ & Entero & 53.36 & 32.99 & 5 & 145 & 1\,885.7 \\
+K & Potasio disponible en el suelo & kg/ha$^{\ast}$ & Entero & 48.15 & 50.65 & 5 & 205 & 27\,238.4 \\
+temperature & Temperatura ambiente & °C & Real & 25.62 & 5.06 & 8.83 & 43.68 & 102.2 \\
+humidity & Humedad relativa del aire & \% & Real & 71.48 & 22.26 & 14.26 & 99.98 & 3\,103.7 \\
+ph & Acidez o alcalinidad del suelo & adimensional (escala 0--14) & Real & 6.47 & 0.77 & 3.50 & 9.94 & 60.3 \\
+rainfall & Precipitación & mm & Real & 103.46 & 54.96 & 20.21 & 298.56 & 605.5 \\
 \midrule
-label & Cultivo recomendado & Categórica & \multicolumn{5}{c}{22 clases, 100 muestras por clase} \\
+label & Cultivo recomendado & --- & Categórica & \multicolumn{5}{c}{22 clases, 100 muestras por clase} \\
 \bottomrule
+\multicolumn{9}{p{0.95\textwidth}}{\scriptsize $^{\ast}$La fuente describe N, P y K como la proporción (\emph{ratio}) del contenido de cada nutriente en el suelo, sin indicar explícitamente la unidad; en la literatura que utiliza este conjunto de datos se interpretan como kg/ha.}
 \end{tabular}
 \end{table*}
 
 Del análisis exploratorio se destacan cuatro hallazgos:
 
 \begin{itemize}
-    \item \textbf{Escalas heterogéneas.} Los rangos de las variables difieren hasta en dos órdenes de magnitud (pH entre 3.5 y 9.9 frente a precipitaciones de casi 300\,mm), lo que hace necesario estandarizarlas para los algoritmos sensibles a la escala.
+    \item \textbf{Escalas heterogéneas.} Los rangos de las variables difieren hasta en dos órdenes de magnitud (pH entre 3.5 y 9.9 frente a precipitaciones de casi 300\,mm y potasio de hasta 205\,kg/ha), lo que hace necesario estandarizarlas para los algoritmos sensibles a la escala.
     \item \textbf{Distribuciones no normales.} K presenta una asimetría positiva marcada (2.38) y una distribución bimodal, mientras que la humedad muestra asimetría negativa ($-1.09$), con concentración en valores altos.
-    \item \textbf{Valores atípicos informativos.} Con el criterio del rango intercuartílico ($1.5\times\mathrm{IQR}$) se detectaron valores atípicos en K (200 muestras), P (138), precipitación (100), temperatura (86), pH (57) y humedad (30). Al analizarlos por clase se verificó que no son errores de medición: por ejemplo, los 200 valores atípicos de K corresponden exactamente a las muestras de manzana y uva, cultivos que requieren niveles de potasio cercanos a 200. Por lo tanto, se conservan, ya que aportan información discriminante.
-    \item \textbf{Relevancia y redundancia.} K, la humedad y P son las variables con mayor capacidad discriminante, mientras que la temperatura y el pH presentan rangos muy solapados entre cultivos (Tabla~\ref{tab:variables}). La mayoría de las variables tienen correlaciones de Pearson débiles entre sí ($|r|<0.25$), con la excepción de P y K, que están fuertemente correlacionadas ($r=0.74$). Esta redundancia motiva el estudio de la selección de características y de la reducción de dimensionalidad.
+    \item \textbf{Valores atípicos informativos.} Con el criterio del rango intercuartílico ($1.5\times\mathrm{IQR}$) se detectaron valores atípicos en K (200 muestras), P (138), precipitación (100), temperatura (86), pH (57) y humedad (30). Al analizarlos por clase se verificó que no son errores de medición: por ejemplo, los 200 valores atípicos de K corresponden exactamente a las muestras de manzana y uva, cultivos con niveles de potasio entre 195 y 205\,kg/ha. Por lo tanto, se conservan, ya que aportan información discriminante.
+    \item \textbf{Relevancia y redundancia.} Según el estadístico $F$, K, la humedad y P son las variables con mayor capacidad discriminante univariada, mientras que la temperatura y el pH presentan rangos muy solapados entre cultivos. La mayoría de las variables tienen correlaciones de Pearson débiles entre sí ($|r|<0.25$), con la excepción de P y K, que están fuertemente correlacionadas ($r=0.74$). Esta redundancia motiva el estudio de la selección de características y de la reducción de dimensionalidad.
 \end{itemize}
 
-\textbf{Imputación y codificación.} Dado que no existen valores faltantes ni registros duplicados, no fue necesario aplicar estrategias de imputación ni de depuración. La Tabla~\ref{tab:codificacion} resume la codificación definida para cada tipo de variable. Los parámetros de estandarización se estimarán exclusivamente con los datos de entrenamiento de cada partición y luego se aplicarán a los datos de validación y prueba, con el fin de evitar la fuga de información.
+\textbf{Imputación y codificación.} Dado que no existen valores faltantes ni registros duplicados, no fue necesario aplicar estrategias de imputación ni de depuración. La Tabla~\ref{tab:codificacion} resume la codificación definida para cada tipo de variable. Los parámetros de estandarización se estiman exclusivamente con los datos de entrenamiento de cada partición y luego se aplican a los datos de validación o de prueba correspondientes, con el fin de evitar la fuga de información.
 
 \begin{table}[htbp]
 \caption{Codificación de las variables}
@@ -172,12 +170,12 @@ El problema se aborda bajo el paradigma de \textbf{aprendizaje supervisado}, ya 
 \end{equation}
 donde $\mathbf{x}_i$ contiene las siete variables de la muestra $i$ y $y_i$ su cultivo, el objetivo es encontrar una función $f:\mathbb{R}^{7}\rightarrow\{0,\dots,21\}$ que prediga correctamente el cultivo de nuevas observaciones.
 
-Este paradigma resulta apropiado por tres razones: las etiquetas están disponibles para todas las muestras; la salida es discreta, por lo que la regresión no aplica; y permite medir directamente la capacidad de generalización de los modelos sobre datos no vistos. El aprendizaje no supervisado se utilizará únicamente como herramienta auxiliar, mediante PCA \cite{hastie2009} y UMAP \cite{mcinnes2018}, para transformar el espacio de características antes de la clasificación.
+Este paradigma resulta apropiado por tres razones: las etiquetas están disponibles para todas las muestras; la salida es discreta, por lo que la regresión no aplica; y permite medir directamente la capacidad de generalización de los modelos sobre datos no vistos. El aprendizaje no supervisado se utiliza únicamente como herramienta auxiliar, mediante PCA \cite{hastie2009} y UMAP \cite{mcinnes2018}, para transformar el espacio de características antes de la clasificación.
 
-La Tabla~\ref{tab:diseno} resume la configuración experimental propuesta. Al tratarse de un conjunto perfectamente balanceado, la exactitud es una métrica representativa; aun así, se complementará con métricas promediadas por clase y con la matriz de confusión, que permite identificar qué cultivos se confunden entre sí.
+La Tabla~\ref{tab:diseno} resume la configuración experimental. Al tratarse de un conjunto perfectamente balanceado, la exactitud es una métrica representativa; aun así, se complementa con el F1 macro y con la matriz de confusión, que permite identificar qué cultivos se confunden entre sí.
 
 \begin{table}[htbp]
-\caption{Configuración experimental propuesta}
+\caption{Configuración experimental}
 \label{tab:diseno}
 \centering
 \footnotesize
@@ -186,11 +184,13 @@ La Tabla~\ref{tab:diseno} resume la configuración experimental propuesta. Al tr
 \textbf{Elemento} & \textbf{Definición} \\
 \midrule
 Paradigma & Aprendizaje supervisado, clasificación multiclase (22 clases) \\
-Modelos & Regresión logística (paramétrico), KNN (no paramétrico), Random Forest (ensamble), red neuronal artificial y SVM \\
+Modelos & Regresión logística (paramétrico), KNN (no paramétrico), Random Forest (ensamble), perceptrón multicapa y SVM RBF \\
 Partición & 80\,\% entrenamiento (1760) y 20\,\% prueba (440), estratificada, semilla fija \\
-Validación & Validación cruzada estratificada de 5 particiones sobre el entrenamiento, con ajuste de hiperparámetros por búsqueda en malla \\
-Métricas & Exactitud, precisión, sensibilidad y F1 macro; matriz de confusión \\
-Reducción de dimensión & Variables originales, selección de características, PCA y UMAP \\
+Ajuste de hiperparámetros & Búsqueda en malla con validación cruzada estratificada de 5 pliegues sobre el entrenamiento \\
+Selección de modelos & Mejor configuración de cada modelo validada repitiendo la partición en $K=5$ pliegues; exactitud de validación con IC de Wilson al 95\,\% \\
+Evaluación final & Una sola vez en el conjunto de prueba, solo para el modelo elegido \\
+Métricas & Exactitud, error, F1 macro, IC de Wilson, matriz de confusión \\
+Análisis de variables & Análisis individual, selección secuencial hacia adelante, PCA y UMAP \\
 Herramienta & Python con scikit-learn \cite{pedregosa2011} \\
 \bottomrule
 \end{tabular}
@@ -232,167 +232,224 @@ H(\mathbf{x})=-\sum_{c=1}^{C} p_c(\mathbf{x})\log p_c(\mathbf{x}),
 \end{equation}
 donde $p_c(\mathbf{x})$ es la probabilidad que el modelo asigna a la clase $c$. Si toda la probabilidad se concentra en una clase, $H=0$ (máxima confianza); si se reparte de forma uniforme, $H=\log C$ (máxima incertidumbre). Los autores interpretan la confianza como alta para $H<1.0$, moderada para $1.0\le H\le1.5$ y baja para $H>1.5$.
 
-En conjunto, los trabajos coinciden en que los modelos basados en árboles y los ensambles superan el 97\,\% de exactitud, lo que es coherente con la alta separabilidad entre cultivos observada en el análisis exploratorio. Sin embargo, la mayoría utiliza una única partición de datos, lo que dificulta comparar los resultados con rigor, y ninguno evalúa el efecto de reducir el número de variables. El presente proyecto aborda estas limitaciones mediante una comparación homogénea con validación cruzada estratificada y el análisis explícito de la selección de características y de la reducción de dimensionalidad con PCA y UMAP.
+En conjunto, los trabajos coinciden en que los modelos basados en árboles y los ensambles superan el 97\,\% de exactitud, lo que es coherente con la alta separabilidad entre cultivos observada en el análisis exploratorio. Sin embargo, la mayoría utiliza una única partición de datos y reporta valores puntuales sin intervalos de confianza, lo que dificulta comparar los resultados con rigor, y ninguno evalúa el efecto de reducir el número de variables. El presente proyecto aborda estas limitaciones mediante una comparación homogénea basada en datos de validación con intervalos de Wilson y el análisis explícito de la selección de características y de la reducción de dimensionalidad.
 
 % =====================================================================
 \section{Metodología}
 \label{sec:metodologia}
 
-\subsection{Partición de datos y prevención de fuga de información}
+\subsection{Partición de datos: entrenamiento, validación y prueba}
 
-El conjunto de 2200 registros se dividió mediante muestreo estratificado en un 80\,\% para entrenamiento (1760 muestras, 80 por cultivo) y un 20\,\% reservado exclusivamente para prueba (440 muestras, 20 por cultivo), fijando la semilla aleatoria en \texttt{random\_state=42} para garantizar la reproducibilidad de los experimentos.
-
-Para evitar la fuga de datos (\emph{data leakage}) durante la búsqueda de hiperparámetros, la estandarización ($z=(x-\mu)/\sigma$) se integró dentro de objetos \texttt{Pipeline} de \texttt{scikit-learn} \cite{pedregosa2011}. De esta forma, la media y la desviación estándar se calcularon únicamente sobre los subconjuntos de entrenamiento de cada partición interna de la validación cruzada, aplicando posteriormente la transformación sobre el pliegue de validación correspondiente y, al finalizar el ajuste, sobre el conjunto de prueba.
-
-\subsection{Entrenamiento y ajuste de hiperparámetros}
-
-Sobre el conjunto de entrenamiento se aplicó búsqueda exhaustiva en malla (\texttt{GridSearchCV}) acoplada a una validación cruzada estratificada de 5 particiones (\texttt{StratifiedKFold}, \texttt{n\_splits=5}), utilizando el puntaje F1 macro como criterio de selección. Se evaluaron cinco familias de clasificadores con los siguientes espacios de búsqueda:
-
+El conjunto de 2200 registros se dividió mediante muestreo estratificado en un 80\,\% para entrenamiento (1760 muestras, 80 por cultivo) y un 20\,\% para prueba (440 muestras, 20 por cultivo), con \texttt{random\_state=42}. Los tres roles de los datos se separaron de forma estricta:
 \begin{itemize}
-    \item \textbf{Regresión logística:} modelo lineal paramétrico multinomial optimizado con el algoritmo L-BFGS (\texttt{max\_iter=1000}) y parámetro de regularización inversa $C \in \{0.01, 0.1, 1, 10, 100\}$.
-    \item \textbf{$K$ vecinos más cercanos (KNN):} clasificador no paramétrico basado en distancia euclidiana en el espacio estandarizado, evaluando \texttt{n\_neighbors} en $\{4, 13, 14, 15, 16, 17\}$.
-    \item \textbf{Random Forest:} ensamble de árboles de decisión por \emph{bagging} bajo el criterio de impureza de Gini, explorando \texttt{n\_estimators} $\in \{18, 19\}$, profundidad máxima \texttt{max\_depth} $\in \{5, 10, 20, \text{None}\}$ y subconjunto de variables por división \texttt{max\_features} en $\{\text{\texttt{sqrt}}, \text{\texttt{log2}}\}$.
-    \item \textbf{Perceptrón multicapa (MLP):} red neuronal prealimentada entrenada con el optimizador Adam (\texttt{max\_iter=500}), evaluando arquitecturas ocultas \texttt{hidden\_layer\_sizes} en $\{(16,), (32,), (16, 16), (32, 32), (32, 16)\}$ y penalización $L_2$ con $\alpha \in \{0.0001, 0.001, 0.01\}$.
-    \item \textbf{Máquina de soporte vectorial (SVM RBF):} clasificador de margen máximo con núcleo gaussiano de base radial, explorando $C \in \{0.1, 1, 10, 100\}$ y $\gamma \in \{\text{\texttt{scale}}, 0.01, 0.1, 1\}$.
+    \item \textbf{Entrenamiento:} ajuste de los parámetros de cada modelo.
+    \item \textbf{Validación:} pliegues extraídos del conjunto de entrenamiento, utilizados para elegir hiperparámetros, comparar modelos, seleccionar variables y decidir la representación (original, PCA o UMAP). \emph{Todas las decisiones del proyecto se toman con estos datos.}
+    \item \textbf{Prueba:} se reserva desde el inicio y se utiliza una sola vez, al final, para estimar la capacidad de generalización del modelo ya elegido. No interviene en ninguna decisión.
 \end{itemize}
 
-\subsection{Importancia de variables y reducción de dimensionalidad}
+Para evitar la fuga de información, la estandarización ($z=(x-\mu)/\sigma$) y las transformaciones PCA y UMAP se integraron dentro de objetos \texttt{Pipeline} de \texttt{scikit-learn} \cite{pedregosa2011}, de modo que se ajustan únicamente con la porción de entrenamiento de cada pliegue y luego se aplican a la porción de validación.
 
-Una vez identificados los dos clasificadores con mejor desempeño sobre las siete variables originales, se desarrolló el análisis del espacio de características en tres etapas:
+\subsection{Ajuste de hiperparámetros}
+
+Sobre el conjunto de entrenamiento se aplicó búsqueda exhaustiva en malla (\texttt{GridSearchCV}) con validación cruzada estratificada de 5 pliegues (\texttt{StratifiedKFold}, \texttt{random\_state=42}) y el F1 macro como criterio. Se evaluaron cinco familias de clasificadores con los siguientes espacios de búsqueda:
+
+\begin{itemize}
+    \item \textbf{Regresión logística:} modelo lineal multinomial optimizado con L-BFGS (\texttt{max\_iter=1000}) y regularización inversa $C \in \{0.01, 0.1, 1, 10, 100\}$.
+    \item \textbf{$K$ vecinos más cercanos (KNN):} clasificador no paramétrico con distancia euclidiana en el espacio estandarizado, con \texttt{n\_neighbors} $\in \{4, 13, 14, 15, 16, 17\}$.
+    \item \textbf{Random Forest:} ensamble de árboles de decisión por \emph{bagging} con el criterio de Gini, explorando \texttt{n\_estimators} $\in \{18, 19\}$, \texttt{max\_depth} $\in \{5, 10, 20, \text{None}\}$ y \texttt{max\_features} $\in \{\text{\texttt{sqrt}}, \text{\texttt{log2}}\}$.
+    \item \textbf{Perceptrón multicapa (MLP):} red neuronal prealimentada entrenada con Adam (\texttt{max\_iter=500}), con \texttt{hidden\_layer\_sizes} $\in \{(16,), (32,), (16, 16), (32, 32), (32, 16)\}$ y penalización $L_2$ con $\alpha \in \{0.0001, 0.001, 0.01\}$.
+    \item \textbf{SVM con núcleo RBF:} clasificador de margen máximo con núcleo gaussiano, con $C \in \{0.1, 1, 10, 100\}$ y $\gamma \in \{\text{\texttt{scale}}, 0.01, 0.1, 1\}$.
+\end{itemize}
+
+\subsection{Validación de la mejor configuración e intervalo de confianza de Wilson}
+
+Con los hiperparámetros óptimos de cada modelo se \textbf{repitió la partición del conjunto de entrenamiento en $K=5$ pliegues estratificados}, con una semilla distinta (\texttt{random\_state=7}) para no reutilizar los pliegues con los que se eligieron los hiperparámetros. En cada repetición, el modelo se entrena con 1408 muestras y se valida con las 352 restantes, de modo que cada una de las $n=1760$ muestras de entrenamiento se valida exactamente una vez. Se reportan la exactitud media de validación, su desviación estándar entre pliegues y el F1 macro.
+
+Como la exactitud $\hat{p}$ es una proporción de aciertos sobre $n$ predicciones, su incertidumbre se cuantificó con el intervalo de confianza de Wilson \cite{wilson1927}, que, a diferencia del intervalo normal (Wald), permanece dentro de $[0,1]$ y mantiene una cobertura adecuada cuando $\hat{p}$ está cerca de 1 \cite{agresti1998}:
+\begin{equation}
+\mathrm{IC} = \frac{\hat{p} + \dfrac{z^{2}}{2n} \pm z\sqrt{\dfrac{\hat{p}(1-\hat{p})}{n} + \dfrac{z^{2}}{4n^{2}}}}{1 + \dfrac{z^{2}}{n}},
+\label{eq:wilson}
+\end{equation}
+con $z=1.96$ para un nivel de confianza del 95\,\%. Los modelos se ordenan por exactitud de validación; cuando el intervalo de un modelo no se solapa con el del mejor, la diferencia se considera estadísticamente significativa al 95\,\%.
+
+\subsection{Análisis individual y selección de características}
+
+Con los dos mejores modelos según validación se realizaron dos análisis:
 \begin{enumerate}
-    \item \textbf{Importancia individual:} se cuantificó la contribución relativa de cada variable mediante la reducción media de impureza de Gini en un ensamble Random Forest ajustado sobre los datos de entrenamiento.
-    \item \textbf{Análisis de componentes principales (PCA):} tras estandarizar las variables de entrenamiento, se obtuvo la descomposición espectral de la matriz de covarianza y se retuvieron las primeras $k$ componentes ortogonales necesarias para conservar al menos el 95\,\% de la varianza explicada acumulada.
-    \item \textbf{Aproximación y proyección uniforme de variedades (UMAP):} se proyectó el espacio estandarizado a una variedad no lineal de dos dimensiones (\texttt{n\_components=2}, \texttt{n\_neighbors=15}, \texttt{min\_dist=0.1}) ajustada exclusivamente sobre el conjunto de entrenamiento \cite{mcinnes2018}.
+    \item \textbf{Análisis individual:} cada modelo se entrenó con \emph{una sola variable} y se validó con el mismo esquema de $K=5$ pliegues. Se calcularon la exactitud con su IC de Wilson y la matriz de confusión de validación, cuya diagonal (sensibilidad por cultivo) indica qué cultivos logra reconocer cada variable por sí sola. Como referencia, se incluyó la importancia de Gini del Random Forest con las 7 variables.
+    \item \textbf{Selección secuencial hacia adelante (SFS):} método de tipo \emph{wrapper} \cite{guyon2003} que parte del conjunto vacío y, en cada paso, agrega la variable que produce la mayor exactitud de validación. Se elige el subconjunto más pequeño cuya exactitud de validación cae dentro del IC de Wilson del modelo con las 7 variables.
 \end{enumerate}
 
-Finalmente, los dos mejores modelos base se reentrenaron y evaluaron sobre las representaciones obtenidas con PCA y UMAP para cuantificar el compromiso entre compresión dimensional y capacidad predictiva.
+\subsection{Reducción de dimensionalidad}
+
+\textbf{PCA:} se retuvieron las primeras $k$ componentes necesarias para conservar al menos el 95\,\% de la varianza acumulada del conjunto de entrenamiento estandarizado. \textbf{UMAP:} se proyectó el espacio estandarizado a dos dimensiones (\texttt{n\_neighbors=15}, \texttt{min\_dist=0.1}) \cite{mcinnes2018}. Dentro de un \texttt{Pipeline}, \texttt{scikit-learn} transmite las etiquetas a cada transformador y UMAP las usaría para una proyección supervisada; por ello se envolvió en un transformador que las ignora, de modo que, igual que PCA, se ajusta de forma no supervisada con la porción de entrenamiento de cada pliegue. Ambas representaciones se evaluaron con los dos mejores modelos y el mismo esquema de validación.
+
+\subsection{Evaluación final}
+
+El enfoque con mayor exactitud de validación se reentrenó con las 1760 muestras de entrenamiento y se evaluó \textbf{una única vez} sobre las 440 muestras de prueba, reportando exactitud, métricas macro, IC de Wilson ($n=440$) y matriz de confusión.
 
 % =====================================================================
 \section{Resultados}
 \label{sec:resultados}
 
-La Tabla~\ref{tab:resultados_base} presenta la configuración óptima de hiperparámetros encontrada en validación cruzada y el desempeño alcanzado por los cinco clasificadores sobre el conjunto de prueba (440 muestras). Se reportan la exactitud (\emph{Accuracy}), el error de clasificación ($1-\text{Exactitud}$) y los promedios macro de precisión, sensibilidad (\emph{Recall}) y puntaje F1.
+\subsection{Selección de modelos con datos de validación}
+
+La Tabla~\ref{tab:resultados_base} presenta la mejor configuración de hiperparámetros de cada modelo y su desempeño en validación ($K=5$, $n=1760$). La Fig.~\ref{fig:ic_modelos} muestra los intervalos de Wilson al 95\,\%.
 
 \begin{table*}[htbp]
-\caption{Desempeño de los modelos base sobre el conjunto de prueba (7 variables originales)}
+\caption{Desempeño en validación ($K=5$, $n=1760$) de la mejor configuración de cada modelo (7 variables originales)}
 \label{tab:resultados_base}
 \centering
 \footnotesize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{llrrrrr}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrrrrc}
 \toprule
-\textbf{Modelo} & \textbf{Mejores hiperparámetros} & \textbf{Exactitud} & \textbf{Error} & \textbf{Precisión macro} & \textbf{Sensibilidad macro} & \textbf{F1 macro} \\
+\textbf{Modelo} & \textbf{Mejores hiperparámetros} & \textbf{Exactitud (\%)} & \textbf{Error (\%)} & \textbf{F1 macro} & \textbf{Errores} & \textbf{IC Wilson 95\,\% (\%)} \\
 \midrule
-Perceptrón multicapa (MLP) & \texttt{hidden\_layer\_sizes=(32,)}, $\alpha=0.01$ & \textbf{0.9932} & \textbf{0.0068} & \textbf{0.9937} & \textbf{0.9932} & \textbf{0.9932} \\
-SVM (núcleo RBF) & $C=1$, $\gamma=1$ & 0.9909 & 0.0091 & 0.9915 & 0.9909 & 0.9909 \\
-Random Forest & \texttt{n\_estimators=19}, \texttt{max\_depth=10}, \texttt{sqrt} & 0.9886 & 0.0114 & 0.9897 & 0.9886 & 0.9887 \\
-Regresión logística & $C=100$ & 0.9841 & 0.0159 & 0.9852 & 0.9841 & 0.9840 \\
-KNN & \texttt{n\_neighbors=4} & 0.9727 & 0.0273 & 0.9746 & 0.9727 & 0.9725 \\
+Random Forest & \texttt{n\_estimators=19}, \texttt{max\_depth=10}, \texttt{sqrt} & \textbf{99.49} $\pm$ 0.37 & \textbf{0.51} & \textbf{0.9949} & 9 & [99.03, 99.73] \\
+SVM (núcleo RBF) & $C=1$, $\gamma=1$ & 98.64 $\pm$ 0.58 & 1.36 & 0.9864 & 24 & [97.98, 99.08] \\
+Perceptrón multicapa (MLP) & \texttt{hidden\_layer\_sizes=(32,)}, $\alpha=0.01$ & 98.41 $\pm$ 0.95 & 1.59 & 0.9841 & 28 & [97.71, 98.90] \\
+Regresión logística & $C=100$ & 98.07 $\pm$ 0.68 & 1.93 & 0.9805 & 34 & [97.31, 98.61] \\
+KNN & \texttt{n\_neighbors=4} & 96.82 $\pm$ 0.88 & 3.18 & 0.9679 & 56 & [95.89, 97.54] \\
 \bottomrule
+\multicolumn{7}{l}{\scriptsize Exactitud: media $\pm$ desviación estándar entre los 5 pliegues. Errores: muestras mal clasificadas de las 1760 validadas.}
 \end{tabular}
 \end{table*}
 
-Todos los modelos evaluados superaron el 97.2\,\% de exactitud en el conjunto de prueba, confirmando que las siete variables edafoclimáticas definen regiones bien diferenciadas para los 22 cultivos. El mejor desempeño se obtuvo con el perceptrón multicapa (MLP) de una sola capa oculta de 32 neuronas y regularización $\alpha=0.01$, que alcanzó una exactitud del 99.32\,\% y un F1 macro de 0.9932 (equivalente a solo 3 muestras mal clasificadas de 440). En segundo lugar se ubicó la máquina de soporte vectorial con núcleo RBF ($C=1, \gamma=1$), con una exactitud del 99.09\,\% y un F1 macro de 0.9909 (4 errores en prueba).
-
-El ensamble Random Forest ocupó el tercer lugar con 98.86\,\% de exactitud y un F1 macro de 0.9887 utilizando 19 árboles con profundidad máxima de 10 niveles. Por su parte, la regresión logística alcanzó un 98.41\,\% de exactitud cuando se redujo la penalización regularizadora ($C=100$), lo que indica que gran parte de las clases son separables mediante hiperplanos lineales, aunque las fronteras curvas de MLP y SVM RBF capturan mejor los casos limítrofes. Finalmente, KNN con $k=4$ vecinos obtuvo el menor desempeño relativo (97.27\,\% de exactitud y error del 2.73\,\%), afectado por la sensibilidad de la distancia euclidiana en zonas de solapamiento entre cultivos de requerimientos similares, como arroz y yute o leguminosas entre sí. Con base en estos resultados, se seleccionaron MLP y SVM RBF para las pruebas de reducción de dimensionalidad.
-
-% =====================================================================
-\section{Reducción de dimensionalidad}
-\label{sec:reduccion}
-
-\subsection{Importancia de características}
-
-La Tabla~\ref{tab:importancia} muestra la importancia relativa de las siete variables predictoras estimada mediante la reducción media de impureza de Gini en el conjunto de entrenamiento.
-
-\begin{table}[htbp]
-\caption{Importancia relativa de las variables según impureza de Gini}
-\label{tab:importancia}
+\begin{figure}[htbp]
 \centering
-\footnotesize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{llrr}
-\toprule
-\textbf{Pos.} & \textbf{Variable} & \textbf{Importancia} & \textbf{Acumulado (\%)} \\
-\midrule
-1 & rainfall (precipitación) & 0.2041 & 20.41 \\
-2 & humidity (humedad relativa) & 0.2033 & 40.74 \\
-3 & K (potasio) & 0.1957 & 60.31 \\
-4 & P (fósforo) & 0.1702 & 77.33 \\
-5 & N (nitrógeno) & 0.0934 & 86.67 \\
-6 & temperature (temperatura) & 0.0823 & 94.90 \\
-7 & ph (acidez del suelo) & 0.0510 & 100.00 \\
-\bottomrule
-\end{tabular}
-\end{table}
+\includegraphics[width=\columnwidth]{ic_wilson_modelos.pdf}
+\caption{Exactitud de validación ($K=5$) con intervalo de confianza de Wilson al 95\,\% para la mejor configuración de cada modelo.}
+\label{fig:ic_modelos}
+\end{figure}
 
-Los resultados evidencian que cuatro variables concentran el 77.33\,\% del peso discriminante del modelo: la precipitación (20.41\,\%), la humedad relativa (20.33\,\%), el potasio (19.57\,\%) y el fósforo (17.02\,\%). Este orden complementa el análisis exploratorio de la Tabla~\ref{tab:variables}: mientras que el estadístico $F$ de ANOVA evalúa cada variable de forma univariada (donde K destaca por los valores extremos de manzana y uva), los árboles de decisión dividen el espacio secuencialmente y aprovechan primero el régimen hídrico (precipitación y humedad) junto con los macronutrientes P y K para separar los grupos de cultivos. En contraste, el nitrógeno (9.34\,\%), la temperatura (8.23\,\%) y el pH (5.10\,\%) aportan particiones secundarias debido al mayor solapamiento de sus distribuciones entre clases.
+Todos los modelos superaron el 96.8\,\% de exactitud de validación, lo que confirma que las siete variables definen regiones bien diferenciadas para los 22 cultivos. El mejor desempeño lo obtuvo \textbf{Random Forest} con 19 árboles de profundidad máxima 10: 99.49\,\% de exactitud (9 errores en 1760 validaciones), con la menor variabilidad entre pliegues ($\pm 0.37$ puntos) e IC de Wilson [99.03\,\%, 99.73\,\%]. En segundo lugar se ubicó \textbf{SVM RBF} ($C=1$, $\gamma=1$), con 98.64\,\%. Sus intervalos prácticamente se tocan (el límite superior de SVM, 99.08\,\%, apenas supera el inferior de Random Forest, 99.03\,\%), por lo que la ventaja de Random Forest sobre SVM es pequeña. En cambio, los intervalos de MLP, regresión logística y KNN no se solapan con el de Random Forest, de modo que su menor desempeño sí es estadísticamente significativo al 95\,\%. Con base en estos resultados se seleccionaron Random Forest y SVM RBF para el análisis de variables y de reducción de dimensionalidad.
 
-\subsection{Análisis de componentes principales (PCA)}
+La matriz de confusión de validación de Random Forest muestra que 7 de sus 9 errores corresponden a la confusión entre arroz y yute, dos cultivos con requerimientos muy similares de humedad, temperatura y precipitación; los dos errores restantes son yute clasificado como papaya y lenteja clasificada como frijol polilla.
 
-Al aplicar PCA sobre las variables de entrenamiento estandarizadas, la proporción de varianza explicada por cada componente principal fue la siguiente: $\text{PC}_1$ con 27.38\,\%, $\text{PC}_2$ con 18.67\,\% (acumulado de 46.05\,\%), $\text{PC}_3$ con 15.31\,\% (61.36\,\%), $\text{PC}_4$ con 14.61\,\% (75.97\,\%), $\text{PC}_5$ con 11.44\,\% (87.40\,\%), $\text{PC}_6$ con 9.84\,\% (97.24\,\%) y $\text{PC}_7$ con 2.76\,\% (100.00\,\%).
+\subsection{Análisis individual de variables}
 
-Las primeras seis componentes principales retienen el 97.24\,\% de la varianza total, superando el umbral del 95\,\%. La séptima componente explica apenas el 2.76\,\% de la varianza residual, la cual corresponde directamente a la colinealidad detectada en el análisis exploratorio entre el fósforo y el potasio ($r=0.74$). Por otra parte, las dos primeras componentes ($\text{PC}_1$ y $\text{PC}_2$) acumulan el 46.05\,\% de la varianza, por lo que una proyección lineal bidimensional resulta insuficiente para separar sin solapamiento las 22 clases.
-
-Al reentrenar los dos mejores modelos empleando las $k=6$ componentes principales, el clasificador MLP mantuvo una exactitud del 98.86\,\% y un F1 macro de 0.9886, mientras que SVM RBF alcanzó una exactitud del 98.41\,\% y un F1 macro de 0.9840. La reducción frente al espacio original de 7 variables es de apenas 0.46 puntos porcentuales para MLP y 0.68 puntos para SVM RBF, demostrando que es posible eliminar la dirección colineal sin deteriorar de forma apreciable la capacidad predictiva.
-
-\subsection{Proyección no lineal con UMAP}
-
-La reducción no lineal mediante UMAP a dos dimensiones (\texttt{n\_components=2}) permitió agrupar visualmente la mayoría de los cultivos en cúmulos compactos, preservando las relaciones de vecindad local mucho mejor que el plano lineal $\text{PC}_1$--$\text{PC}_2$. Al entrenar los clasificadores directamente sobre estas dos coordenadas latentes, el modelo MLP obtuvo una exactitud del 93.18\,\% (F1 macro de 0.9294) y SVM RBF alcanzó un 96.14\,\% (F1 macro de 0.9611).
-
-La Tabla~\ref{tab:comparacion_integral} sintetiza el desempeño de los cinco modelos base en el espacio original junto con las variantes reducidas mediante PCA y UMAP.
+La Tabla~\ref{tab:individual} resume la exactitud de validación de los dos mejores modelos entrenados con una sola variable, junto con la importancia de Gini y los cultivos que cada variable reconoce mejor. La Fig.~\ref{fig:sensibilidad} presenta la diagonal de las siete matrices de confusión (sensibilidad por cultivo) obtenidas con Random Forest.
 
 \begin{table*}[htbp]
-\caption{Comparación integral de modelos en el espacio original y con reducción de dimensionalidad}
+\caption{Análisis individual de variables: exactitud de validación ($K=5$) usando una sola variable}
+\label{tab:individual}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccl}
+\toprule
+\textbf{Variable} & \textbf{Gini (RF, 7 var.)} & \textbf{Exactitud RF (\%) [IC 95\,\%]} & \textbf{Exactitud SVM (\%) [IC 95\,\%]} & \textbf{Cultivos mejor reconocidos (sensibilidad, RF)} \\
+\midrule
+rainfall & 0.2041 & 36.59 [34.37, 38.87] & 37.90 [35.66, 40.19] & melón (1.00), uva (0.79), mango (0.78) \\
+humidity & 0.2033 & 34.20 [32.02, 36.45] & 35.45 [33.25, 37.72] & frijol rojo (0.84), garbanzo (0.82), mango (0.72) \\
+K & 0.1957 & 28.81 [26.74, 30.97] & 29.20 [27.13, 31.37] & garbanzo (1.00), naranja (0.91), manzana (0.53) \\
+P & 0.1702 & 21.42 [19.57, 23.40] & 20.74 [18.91, 22.70] & banano (0.64), uva (0.45), manzana (0.42) \\
+temperature & 0.0823 & 18.07 [16.34, 19.93] & 22.22 [20.34, 24.22] & garbanzo (0.55), manzana (0.38), sandía (0.38) \\
+N & 0.0934 & 15.34 [13.73, 17.10] & 14.09 [12.54, 15.79] & algodón (0.49), yute (0.34), melón (0.26) \\
+ph & 0.0510 & 15.00 [13.41, 16.74] & 18.07 [16.34, 19.93] & papaya (0.46), frijol polilla (0.46), frijol rojo (0.34) \\
+\bottomrule
+\multicolumn{5}{l}{\scriptsize Referencia: un clasificador aleatorio obtendría 4.55\,\% (1/22).}
+\end{tabular}
+\end{table*}
+
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=\textwidth]{sensibilidad_variable_individual.pdf}
+\caption{Sensibilidad por cultivo (diagonal de la matriz de confusión de validación, en \%) de Random Forest entrenado con una sola variable. Cada fila corresponde a una variable y cada columna a un cultivo.}
+\label{fig:sensibilidad}
+\end{figure*}
+
+Ninguna variable es suficiente por sí sola: aunque todas superan ampliamente el 4.55\,\% de un clasificador aleatorio, la más informativa, la precipitación, alcanza apenas 36.6\,\% con Random Forest y 37.9\,\% con SVM, seguida de la humedad (34.2\,\% y 35.5\,\%) y del potasio (28.8\,\% y 29.2\,\%). Las cuatro primeras posiciones coinciden con la importancia de Gini, y ambas medidas ubican a la temperatura, el nitrógeno y el pH en los últimos lugares.
+
+Las matrices de confusión muestran que cada variable se especializa en pocos cultivos. El potasio reconoce por completo el garbanzo (100\,\%) y casi toda la naranja (91\,\%), pero confunde manzana y uva entre sí, porque ambas tienen niveles idénticos de K (195 a 205\,kg/ha). Esto explica por qué K tiene el mayor estadístico $F$ de ANOVA (Tabla~\ref{tab:variables}), que está dominado por la gran distancia de ese par al resto de cultivos, y aun así ocupa solo el tercer lugar en exactitud individual. La precipitación identifica el melón (100\,\%), la uva (79\,\%) y el mango (78\,\%), mientras que la humedad separa el frijol rojo (84\,\%) y el garbanzo (82\,\%). Estas especializaciones complementarias explican por qué la combinación de variables eleva la exactitud por encima del 99\,\%.
+
+\subsection{Selección secuencial de características}
+
+La Fig.~\ref{fig:sfs} muestra la evolución de la exactitud de validación a medida que la selección secuencial hacia adelante agrega variables. Para ambos modelos, el orden de ingreso de las cinco primeras variables fue el mismo: precipitación, humedad, K, N y P. Con dos variables la exactitud sube a 78.8\,\% (RF) y 73.7\,\% (SVM); con tres, a 95.8\,\% y 93.0\,\%.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth]{seleccion_secuencial.pdf}
+\caption{Exactitud de validación ($K=5$) con IC de Wilson al 95\,\% en función del número de variables seleccionadas por SFS.}
+\label{fig:sfs}
+\end{figure}
+
+El subconjunto de cinco variables (precipitación, humedad, K, N y P) queda dentro del intervalo de Wilson del modelo completo en ambos casos: Random Forest alcanza 99.03\,\% (IC del modelo completo [99.03\,\%, 99.73\,\%]) y SVM 98.12\,\% (IC [97.98\,\%, 99.08\,\%]). Por lo tanto, la temperatura y el pH podrían omitirse con una pérdida que no es estadísticamente significativa al 95\,\%, aunque en Random Forest el subconjunto se ubica justo en el límite inferior del intervalo. Con cuatro variables, en cambio, la caída sí es significativa (97.90\,\% en RF y 96.70\,\% en SVM).
+
+\subsection{Reducción de dimensionalidad con PCA y UMAP}
+
+Al aplicar PCA sobre las variables de entrenamiento estandarizadas, la varianza explicada por componente fue: $\text{PC}_1$ 27.38\,\%, $\text{PC}_2$ 18.67\,\%, $\text{PC}_3$ 15.31\,\%, $\text{PC}_4$ 14.61\,\%, $\text{PC}_5$ 11.44\,\%, $\text{PC}_6$ 9.84\,\% y $\text{PC}_7$ 2.76\,\%. Las primeras seis componentes retienen el 97.24\,\% de la varianza y superan el umbral del 95\,\%; la séptima, con solo 2.76\,\%, recoge la dirección asociada a la colinealidad entre fósforo y potasio ($r=0.74$). Las dos primeras componentes acumulan apenas el 46.05\,\%, por lo que un plano lineal es insuficiente para separar las 22 clases.
+
+Con las 6 componentes principales, SVM RBF obtuvo 98.07\,\% de exactitud de validación (IC [97.31\,\%, 98.61\,\%]), cercano a su desempeño original, mientras que Random Forest cayó a 94.32\,\% (IC [93.14\,\%, 95.31\,\%]). Esta caída se explica porque los árboles dividen el espacio mediante umbrales sobre cada variable original, y las componentes principales mezclan todas las variables en cada eje.
+
+UMAP agrupó visualmente la mayoría de los cultivos en cúmulos compactos dentro del plano bidimensional. Sin embargo, al clasificar sobre esas dos coordenadas, la exactitud de validación fue de 94.55\,\% con SVM RBF (IC [93.38\,\%, 95.51\,\%]) y de 93.92\,\% con Random Forest (IC [92.71\,\%, 94.94\,\%]).
+
+\subsection{Comparación integral y evaluación final en prueba}
+
+La Tabla~\ref{tab:comparacion_integral} consolida todos los enfoques evaluados en validación, y con base en ella se eligió el modelo final.
+
+\begin{table*}[htbp]
+\caption{Comparación integral en validación ($K=5$, $n=1760$) de los enfoques evaluados}
 \label{tab:comparacion_integral}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{5pt}
-\begin{tabular}{llrrrrr}
+\begin{tabular}{llrrrc}
 \toprule
-\textbf{Enfoque / Modelo} & \textbf{Dimensión} & \textbf{Exactitud} & \textbf{Error} & \textbf{Precisión macro} & \textbf{Sensibilidad macro} & \textbf{F1 macro} \\
+\textbf{Enfoque / Modelo} & \textbf{Representación} & \textbf{Exactitud (\%)} & \textbf{F1 macro} & \textbf{Errores} & \textbf{IC Wilson 95\,\% (\%)} \\
 \midrule
-Base: Perceptrón multicapa (MLP) & Original (7 vars) & \textbf{0.9932} & \textbf{0.0068} & \textbf{0.9937} & \textbf{0.9932} & \textbf{0.9932} \\
-Base: SVM (núcleo RBF) & Original (7 vars) & 0.9909 & 0.0091 & 0.9915 & 0.9909 & 0.9909 \\
-Base: Random Forest & Original (7 vars) & 0.9886 & 0.0114 & 0.9897 & 0.9886 & 0.9887 \\
-Base: Regresión logística & Original (7 vars) & 0.9841 & 0.0159 & 0.9852 & 0.9841 & 0.9840 \\
-Base: KNN & Original (7 vars) & 0.9727 & 0.0273 & 0.9746 & 0.9727 & 0.9725 \\
-\midrule
-PCA + MLP & Reducida (6 comp., 97.24\,\% var.) & 0.9886 & 0.0114 & 0.9889 & 0.9886 & 0.9886 \\
-PCA + SVM RBF & Reducida (6 comp., 97.24\,\% var.) & 0.9841 & 0.0159 & 0.9847 & 0.9841 & 0.9840 \\
-\midrule
-UMAP + SVM RBF & Reducida (2 comp. no lineales) & 0.9614 & 0.0386 & 0.9660 & 0.9614 & 0.9611 \\
-UMAP + MLP & Reducida (2 comp. no lineales) & 0.9318 & 0.0682 & 0.9406 & 0.9318 & 0.9294 \\
+Base: Random Forest & Original (7 variables) & \textbf{99.49} $\pm$ 0.37 & \textbf{0.9949} & 9 & [99.03, 99.73] \\
+SFS: Random Forest & 5 variables (rainfall, humidity, K, N, P) & 99.03 $\pm$ 0.25 & 0.9903 & 17 & [98.46, 99.40] \\
+Base: SVM RBF & Original (7 variables) & 98.64 $\pm$ 0.58 & 0.9864 & 24 & [97.98, 99.08] \\
+Base: MLP & Original (7 variables) & 98.41 $\pm$ 0.95 & 0.9841 & 28 & [97.71, 98.90] \\
+SFS: SVM RBF & 5 variables (rainfall, humidity, K, N, P) & 98.12 $\pm$ 0.48 & 0.9812 & 33 & [97.38, 98.66] \\
+PCA + SVM RBF & 6 componentes (97.24\,\% var.) & 98.07 $\pm$ 0.55 & 0.9807 & 34 & [97.31, 98.61] \\
+Base: Regresión logística & Original (7 variables) & 98.07 $\pm$ 0.68 & 0.9805 & 34 & [97.31, 98.61] \\
+Base: KNN & Original (7 variables) & 96.82 $\pm$ 0.88 & 0.9679 & 56 & [95.89, 97.54] \\
+UMAP + SVM RBF & 2 componentes no lineales & 94.55 $\pm$ 1.16 & 0.9444 & 96 & [93.38, 95.51] \\
+PCA + Random Forest & 6 componentes (97.24\,\% var.) & 94.32 $\pm$ 0.57 & 0.9433 & 100 & [93.14, 95.31] \\
+UMAP + Random Forest & 2 componentes no lineales & 93.92 $\pm$ 1.52 & 0.9386 & 107 & [92.71, 94.94] \\
 \bottomrule
 \end{tabular}
 \end{table*}
+
+El enfoque con mayor exactitud de validación fue Random Forest con las 7 variables originales. Reentrenado con las 1760 muestras de entrenamiento y evaluado una única vez en el conjunto de prueba, obtuvo una \textbf{exactitud de 98.86\,\%} (435 de 440 muestras; error de 1.14\,\%), con IC de Wilson al 95\,\% de [97.37\,\%, 99.51\,\%], precisión macro de 0.9897, sensibilidad macro de 0.9886 y F1 macro de 0.9887. El intervalo de prueba se solapa con el de validación, por lo que ambas estimaciones son coherentes; el intervalo de prueba es más amplio porque se basa en 440 muestras en lugar de 1760.
+
+La Fig.~\ref{fig:confusion_prueba} muestra la matriz de confusión de prueba. Los cinco errores se concentran en cultivos con requerimientos parecidos: dos muestras de lenteja y una de frijol negro clasificadas como frijol polilla, una de frijol negro clasificada como maíz y una de arroz clasificada como yute.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth]{matriz_confusion_prueba.pdf}
+\caption{Matriz de confusión del modelo final (Random Forest, 7 variables) en el conjunto de prueba ($n=440$, 20 muestras por cultivo).}
+\label{fig:confusion_prueba}
+\end{figure}
 
 % =====================================================================
 \section{Discusión}
 \label{sec:discusion}
 
-Los resultados experimentales permiten contrastar el desempeño de distintas familias algorítmicas frente a la literatura reciente y analizar el compromiso entre exactitud, dimensionalidad e interpretabilidad agronómica.
+\textbf{Selección con validación frente a prueba.} Separar estrictamente validación y prueba fue determinante para obtener una estimación honesta. Con $n=440$, el IC de Wilson de una exactitud cercana al 99\,\% tiene una amplitud de unos 2 puntos porcentuales, de modo que diferencias de 1 a 3 muestras entre modelos en el conjunto de prueba no son estadísticamente distinguibles; si la prueba se usara para elegir el mejor modelo, esa elección dependería en buena parte del azar de la partición y la exactitud reportada quedaría sesgada al alza. Al decidir con los 1760 datos de validación y medir la prueba una sola vez, el valor de 98.86\,\% es una estimación no sesgada del desempeño esperado en datos nuevos.
 
-En primer lugar, la exactitud alcanzada por los modelos con mejor ajuste en este trabajo —99.32\,\% con MLP, 99.09\,\% con SVM RBF y 98.86\,\% con Random Forest— supera el 97.18\,\% reportado por Thilakarathne \emph{et al.} \cite{thilakarathne2022} y es competitiva frente a los mejores resultados reportados por Dey \emph{et al.} (99.09\,\% con XGBoost) \cite{dey2024}, Prity \emph{et al.} (99.31\,\% con Random Forest) \cite{prity2024} y Shastri \emph{et al.} (99.27\,\% con Gradient Boosting) \cite{shastri2025}. A diferencia de los estudios que evalúan una única partición sin estandarización encapsulada, el uso de \texttt{Pipeline} con validación cruzada estratificada de 5 pliegues garantiza que estos valores no estén sesgados por fuga de información entre entrenamiento y prueba. Asimismo, se observa que una arquitectura neuronal ligera (una capa oculta de 32 unidades) debidamente regularizada ($\alpha=0.01$) supera la marca cercana al 98\,\% reportada previamente para redes neuronales en \cite{shastri2025}.
+\textbf{Comparación con la literatura.} La exactitud de prueba del modelo final (98.86\,\%, IC [97.37\,\%, 99.51\,\%]) supera el 97.18\,\% reportado por Thilakarathne \emph{et al.} \cite{thilakarathne2022}, y es comparable con los resultados de Dey \emph{et al.} (99.09\,\%) \cite{dey2024}, Prity \emph{et al.} (99.31\,\%) \cite{prity2024} y Shastri \emph{et al.} (99.27\,\%) \cite{shastri2025}, que se encuentran dentro de nuestro intervalo de confianza; solo el ensamble de Alam \emph{et al.} (99.54\,\%) \cite{alam2025} queda ligeramente por encima de su límite superior. Por tanto, no es posible afirmar que alguno de estos enfoques sea claramente superior al nuestro, ni viceversa, más aún cuando cada trabajo utiliza particiones y protocolos de evaluación distintos. Además, la coincidencia de Random Forest como mejor modelo con \cite{thilakarathne2022} y \cite{prity2024} refuerza que los ensambles de árboles se adaptan bien a la estructura de este problema, en la que varias variables actúan como umbrales que aíslan grupos de cultivos.
 
-En segundo lugar, el análisis de importancia de características demuestra que las variables asociadas a la disponibilidad de agua (\texttt{rainfall} y \texttt{humidity}) y los macronutrientes \texttt{K} y \texttt{P} aportan más de tres cuartas partes (77.33\,\%) de la reducción de impureza. No obstante, las variables con menor peso relativo (\texttt{N}, \texttt{temperature} y \texttt{ph}) cumplen un papel complementario necesario para desambiguar cultivos que comparten regímenes hídricos similares pero difieren en sus requerimientos nitrogenados o térmicos.
+\textbf{Interpretación agronómica de las variables.} El análisis individual y la selección secuencial coinciden en que el régimen hídrico (precipitación y humedad) y los macronutrientes K, N y P son los factores determinantes: con estas cinco variables se obtiene un desempeño estadísticamente equivalente al del modelo completo. La temperatura y el pH aportan información complementaria para desambiguar algunos cultivos, pero su omisión no produce una pérdida significativa al 95\,\%. En la práctica, esto sugiere que un análisis de suelo NPK y registros de precipitación y humedad bastarían para obtener recomendaciones muy precisas.
 
-En tercer lugar, los experimentos de reducción de dimensionalidad ponen de manifiesto que, al contar inicialmente con solo siete variables de entrada, la compresión del espacio tiene propósitos diferenciados según la técnica empleada:
-\begin{itemize}
-    \item \textbf{PCA ($k=6$):} elimina eficazmente la redundancia lineal entre fósforo y potasio condensando el 97.24\,\% de la varianza y conservando un 98.86\,\% de exactitud en el MLP. Sin embargo, dado que cada componente principal es una combinación lineal de las siete variables originales, su adopción en producción no reduce el número de sensores ni de análisis químicos de suelo necesarios en campo, y disminuye la interpretabilidad física directa de las reglas de decisión.
-    \item \textbf{UMAP ($k=2$):} logra comprimir un problema de 22 clases desde $\mathbb{R}^7$ hasta $\mathbb{R}^2$ reteniendo entre el 93.18\,\% (MLP) y el 96.14\,\% (SVM RBF) de exactitud. La caída de 3 a 6 puntos porcentuales respecto al espacio original se debe a la pérdida inevitable de grados de libertad al proyectar siete variables en un plano; dentro de dicho plano, el núcleo local RBF de SVM se adapta mejor a los contornos irregulares de las proyecciones que las capas densas del MLP. Por tanto, UMAP resulta idóneo como herramienta de visualización y diagnóstico exploratorio de agrupamientos agrícolas, pero no como etapa previa de clasificación cuando se requiere máxima precisión.
-\end{itemize}
+\textbf{Reducción de dimensionalidad.} Con solo siete variables, la compresión del espacio no aporta mejoras predictivas. PCA con 6 componentes conserva el desempeño de SVM, pero degrada el de Random Forest y, como cada componente combina las siete variables, no reduce el número de mediciones necesarias en campo ni preserva la interpretabilidad. UMAP comprime el problema de $\mathbb{R}^7$ a $\mathbb{R}^2$ reteniendo cerca del 94\,\% de exactitud, por lo que resulta útil para visualizar y diagnosticar agrupamientos, pero no como etapa previa de clasificación. La selección de características es preferible porque, además de mantener el desempeño, elimina variables completas.
 
 % =====================================================================
 \section{Conclusiones}
 \label{sec:conclusiones}
 
-En este trabajo se diseñó, implementó y evaluó un sistema predictivo de recomendación de cultivos sobre 22 clases balanceadas a partir de siete variables fisicoquímicas del suelo y del clima, integrando análisis exploratorio, ajuste sistemático de hiperparámetros sin fuga de datos y técnicas de reducción de dimensionalidad. A partir de los resultados obtenidos se concluye lo siguiente:
+En este trabajo se diseñó, implementó y evaluó un sistema predictivo de recomendación de cultivos sobre 22 clases balanceadas a partir de siete variables del suelo y del clima, con una metodología en la que todas las decisiones se tomaron con datos de validación y el conjunto de prueba se usó una única vez. Se concluye lo siguiente:
 
 \begin{enumerate}
-    \item El perceptrón multicapa (\texttt{hidden\_layer\_sizes=(32,)}, $\alpha=0.01$) y la máquina de soporte vectorial con núcleo RBF ($C=1, \gamma=1$) fueron los clasificadores más precisos sobre las siete variables originales, alcanzando exactitudes en prueba del 99.32\,\% (F1 macro de 0.9932) y 99.09\,\% (F1 macro de 0.9909), respectivamente, seguidos de cerca por Random Forest con 98.86\,\%.
-    \item El análisis de importancia de características mediante impureza de Gini determinó que la precipitación (20.41\,\%), la humedad relativa (20.33\,\%), el potasio (19.57\,\%) y el fósforo (17.02\,\%) concentran el 77.33\,\% de la capacidad discriminante del sistema, confirmando que el balance hídrico y la disponibilidad de P y K son los factores determinantes en la diferenciación de los 22 cultivos.
-    \item La reducción lineal mediante PCA permitió absorber la colinealidad entre fósforo y potasio ($r=0.74$) en 6 componentes ortogonales que explican el 97.24\,\% de la varianza, manteniendo una exactitud del 98.86\,\% en el modelo MLP. Por su parte, la reducción no lineal a 2 componentes con UMAP facilitó la representación visual de las 22 clases en el plano y conservó una exactitud del 93.18\,\% en MLP y del 96.14\,\% en SVM RBF.
-    \item Para el despliegue práctico del sistema de recomendación agrícola se recomienda utilizar el modelo MLP o SVM RBF sobre el espacio original estandarizado de 7 variables, ya que ofrece el máximo rendimiento predictivo (error inferior al 1\,\%), bajo costo computacional de inferencia y preserva la trazabilidad directa de cada variable edafoclimática medida en terreno.
+    \item Random Forest con 19 árboles, profundidad máxima de 10 y $\sqrt{7}$ variables candidatas por división fue el mejor modelo según validación, con una exactitud de 99.49\,\% (IC de Wilson al 95\,\% [99.03\,\%, 99.73\,\%]), seguido de SVM RBF (98.64\,\%). Su ventaja sobre MLP, regresión logística y KNN es estadísticamente significativa.
+    \item Evaluado una sola vez en prueba, el modelo final alcanzó 98.86\,\% de exactitud (IC [97.37\,\%, 99.51\,\%]) y F1 macro de 0.9887, en concordancia con la estimación de validación; sus pocos errores se concentran en leguminosas y en el par arroz--yute.
+    \item El análisis individual mostró que ninguna variable es suficiente por sí sola (máximo 37.9\,\% con la precipitación) y que cada una reconoce solo algunos cultivos; la matriz de confusión con solo K reveló, por ejemplo, que manzana y uva no pueden distinguirse por su potasio.
+    \item La selección secuencial hacia adelante identificó un subconjunto de cinco variables (precipitación, humedad, K, N y P) estadísticamente equivalente al modelo completo, lo que permitiría prescindir de la temperatura y el pH.
+    \item PCA (6 componentes, 97.24\,\% de la varianza) y UMAP (2 componentes) no mejoraron el desempeño; UMAP es útil para visualización, pero no como etapa de preprocesamiento para la clasificación.
+    \item Para el despliegue se recomienda Random Forest sobre las variables originales, por su máximo desempeño en validación, su bajo costo de inferencia y la trazabilidad directa de cada variable medida en campo.
 \end{enumerate}
 
 % =====================================================================
@@ -403,9 +460,9 @@ En este trabajo se diseñó, implementó y evaluó un sistema predictivo de reco
 \appendices
 \section{Repositorio del proyecto}
 
-El código fuente, los cuadernos de análisis exploratorio y los experimentos del proyecto se encuentran disponibles en el siguiente repositorio público activo:
+El código fuente, los cuadernos de análisis exploratorio y los experimentos del proyecto se encuentran disponibles en el siguiente repositorio público:
 \begin{center}
 \url{https://github.com/JONATANRAP/Modellos-II-PROYECTO-DE-AULA.git}
-\end{center}    
+\end{center}
 
 \end{document}
